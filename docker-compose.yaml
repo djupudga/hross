@@ -1,0 +1,31 @@
+version: '3.9'
+
+volumes:
+  mongo:
+
+services:
+  mongodb:
+    image: mongo:5.0
+    ports:
+    - 27017:27017
+    expose:
+      - "27017"
+    volumes:
+    # - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    - mongo:/data/db
+    environment:
+    - MONGO_INITDB_ROOT_USERNAME=${MONGO_UID}
+    - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PWD}
+  node:
+    build: .
+    environment:
+    - LOG_LEVEL=${LOG_LEVEL}
+    - BASE_URL=${BASE_URL}
+    - EMAIL=${EMAIL}
+    - PASSWORD=${PASSWORD}
+    - MONGO_URL=mongodb://mongodb
+    - MONGO_UID=${MONGO_UID}
+    - MONGO_PWD=${MONGO_PWD}
+    - PORT=${PORT}
+    - BACKOFF=${BACKOFF}
+    - MONGO_RETRY_COUNT=${MONGO_RETRY_COUNT}

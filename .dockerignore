@@ -1,0 +1,16 @@
+node_modules
+coverage
+npm-debug.log
+src
+scripts
+.dockerignore
+.env
+.gitignore
+.prettierrc
+.test.env
+docker-compose.yaml
+Dockerfile
+jest.config.js
+Makefile
+README.md
+tsconfig.json
