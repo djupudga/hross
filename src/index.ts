@@ -18,13 +18,13 @@ import {server, setStatus} from './health.js'
 const {baseUrl, email, password} = config.trav
 
 const eventStream = new Readable({
-  read() {
-    // Do nothing. This method only signals that the
-    // stream should read from the underlying
-    // datasource, which is not really needed
-    // since Request fn will be continuously pushing
-    // to the stream.
-  },
+	read() {
+		// Do nothing. This method only signals that the
+		// stream should read from the underlying
+		// datasource, which is not really needed
+		// since Request fn will be continuously pushing
+		// to the stream.
+	},
 })
 
 // Receives events to be written to mongo
@@ -39,12 +39,12 @@ const request = createRequestFunction(eventStream, httpGet)
 const poller = createPoller(request)
 // Create the function that manages authentication
 const authFunction = createAuthenticator(
-  {
-    baseUrl: baseUrl,
-    json: {email, password},
-  },
-  httpPost,
-  poller
+	{
+		baseUrl: baseUrl,
+		json: {email, password},
+	},
+	httpPost,
+	poller
 )
 
 // The main loop is just a never ending loop
@@ -54,52 +54,52 @@ const authFunction = createAuthenticator(
 // initiated and the request polling starts again.
 // For any other errors, the server bails.
 async function mainLoop() {
-  log.info('HROSS starting')
-  // Starthing healthz web server
-  server.listen(config.server.port, () => {
-    log.info(`Server listening on port ${config.server.port}`)
-  })
-  // Mongo may not be ready so waiting.
-  // Possible this is not really needed, but why not
-  let retry = 0
-  while (true) {
-    log.info(`Connecting to mongodb at ${config.mongo.url}`)
-    try {
-      await mongoose.connect(config.mongo.url, config.mongo.connect)
-      setStatus('ready')
-      break
-    } catch (err) {
-      if (++retry > config.mongo.retryCount) throw new Error('Mongo db down')
-      setStatus('not-ready')
-      log.info({err}, 'Mongo not ready')
-    }
-  }
-  log.info('Mongo connected')
-  while (true) {
-    try {
-      // Main logic for fetching those race events
-      await backoff(authFunction)
-    } catch (err) {
-      if (unrecoverable(err)) {
-        throw err
-      }
-      log.info({err}, 'recovering')
-    }
-  }
+	log.info('HROSS starting')
+	// Starthing healthz web server
+	server.listen(config.server.port, () => {
+		log.info(`Server listening on port ${config.server.port}`)
+	})
+	// Mongo may not be ready so waiting.
+	// Possible this is not really needed, but why not
+	let retry = 0
+	while (true) {
+		log.info(`Connecting to mongodb at ${config.mongo.url}`)
+		try {
+			await mongoose.connect(config.mongo.url, config.mongo.connect)
+			setStatus('ready')
+			break
+		} catch (err) {
+			if (++retry > config.mongo.retryCount) throw new Error('Mongo db down')
+			setStatus('not-ready')
+			log.info({err}, 'Mongo not ready')
+		}
+	}
+	log.info('Mongo connected')
+	while (true) {
+		try {
+			// Main logic for fetching those race events
+			await backoff(authFunction)
+		} catch (err) {
+			if (unrecoverable(err)) {
+				throw err
+			}
+			log.info({err}, 'recovering')
+		}
+	}
 }
 
 function unrecoverable(e: unknown) {
-  if (e instanceof InvalidSessionError) return true
-  if (e instanceof ServerBusyError) return true
+	if (e instanceof InvalidSessionError) return true
+	if (e instanceof ServerBusyError) return true
 
-  return false
+	return false
 }
 
 mainLoop()
-  .then(() => {
-    log.info('HROSS exiting')
-  })
-  .catch((err) => {
-    log.error({err}, 'Unrecovarable error, bailing')
-    server.close()
-  })
+	.then(() => {
+		log.info('HROSS exiting')
+	})
+	.catch((err) => {
+		log.error({err}, 'Unrecovarable error, bailing')
+		server.close()
+	})

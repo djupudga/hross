@@ -8,7 +8,7 @@
     "build": "tsc",
     "clean": "rm -rf lib",
     "start": "npm run build && node lib/index.js | bunyan --color",
-    "format": "prettier -w src/**/* test/**/*",
+    "format": "prettier -w src/* src/**/* test/**/* test/*",
     "test": "LOG_LEVEL=warn NODE_ENV=test jest --collectCoverage",
     "test:detect": "LOG_LEVEL=warn NODE_ENV=test jest --detectOpenHandles"
   },
