@@ -8,10 +8,10 @@ export function createRequestFunction(
 	stream: Readable,
 	get: HttpGetFn
 ): RequestFn {
-	return async function request({
+	return async ({
 		baseUrl,
 		token,
-	}: RequestOptions): Promise<undefined> {
+	}: RequestOptions): Promise<undefined> => {
 		log.info('Making a request')
 		const response = await get({
 			url: `${baseUrl}/results`,
@@ -25,10 +25,12 @@ export function createRequestFunction(
 				return
 			case 401:
 				throw new InvalidSessionError('session timeout')
-			default:
+			case 200:
 				log.info({result: response.body}, 'New result')
 				stream.push(response.body)
 				return
+			default:
+				throw new Error(`Invalid response, statusCode ${response.statusCode}`)
 		}
 	}
 }
