@@ -1,5 +1,6 @@
-import {cleanDb, teardown, setup, forThis} from './fixture-setup'
-import {MongoWritable} from '../../src/data/mongo-writable'
+import {cleanDb, teardown, setup} from './fixture-setup'
+// import {MongoWritable} from '../../src/data/mongo-writable'
+import {processEvent, clearCache} from '../../src/data/service'
 import {Race, Horse} from '../../src/data/models'
 
 function createHorseEvent(
@@ -32,6 +33,15 @@ function createEndEvents(count: number) {
 	return evts
 }
 
+async function createRace() {
+	for (const evt of createStartEvents(6)) {
+		await processEvent(JSON.parse(evt))
+	}
+	for (const evt of createEndEvents(6)) {
+		await processEvent(JSON.parse(evt))
+	}
+}
+
 beforeAll(async () => {
 	await setup()
 })
@@ -44,34 +54,21 @@ describe('mongo integration tests', () => {
 	describe('writable stream', () => {
 		afterEach(async () => {
 			await cleanDb()
+			clearCache()
 		})
-		it('saves a race to the database', (done) => {
-			const stream = new MongoWritable()
-
-			stream.once('drain', () => {
-				Race.count()
-					.then((count) => {
-						expect(count).toEqual(1)
-						done()
-					})
-					.catch(done)
-			})
-
+		it('saves a race to the database', async () => {
 			const evt = createHorseEvent(1, 'foo', 'start', 0)
-			stream.write(evt)
+			await processEvent(JSON.parse(evt))
+			const count = await Race.count()
+			expect(count).toEqual(1)
 		})
 
 		it('processes events into different races', async () => {
-			const stream = new MongoWritable()
-
 			// First race
-			createStartEvents(6).forEach((evt) => stream.write(evt))
-			createEndEvents(6).forEach((evt) => stream.write(evt))
+			await createRace()
 			// Second race
-			createStartEvents(6).forEach((evt) => stream.write(evt))
-			createEndEvents(6).forEach((evt) => stream.write(evt))
+			await createRace()
 
-			await forThis(200) // Hacky, mongo needs to "drain"
 			const raceCount = await Race.count()
 			const horseCount = await Horse.count()
 
