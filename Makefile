@@ -1,7 +1,7 @@
 install:
 	npm install
 
-start:
+start: build
 	docker compose up -d
 
 stop:
